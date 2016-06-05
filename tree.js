@@ -5,7 +5,7 @@ var rawData = fs.readFileSync('./data', 'utf-8');
 var indexColumn = 'index';
 var resultColumn = 'play';
 var columns = [indexColumn, 'outlook', 'temperature', 'humidity', 'wind', resultColumn];
-var attributesCColumns = _.without(columns, indexColumn, resultColumn);
+var attributesColumns = _.without(columns, indexColumn, resultColumn);
 
 var data = _(rawData)
     .split('\n')
