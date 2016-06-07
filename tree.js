@@ -19,6 +19,14 @@ function attributesFrequency(attributesColumns, resultColumn, labeledData) {
   );
 }
 
+function entropy(probs) {
+  var total = _.sum(probs);
+  return _.reduce(probs, function(ent, prob) {
+    var probRate = prob / total;
+    return ent + (- probRate * Math.log2(probRate))
+  }, 0)
+}
+
 var data = _(rawData)
     .split('\n')
     .compact()
