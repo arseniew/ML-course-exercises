@@ -28,16 +28,53 @@ function entropy(probs) {
   }, 0)
 }
 
+
+
 var data = _(rawData)
     .split('\n')
     .compact()
     .map(_.partial(_.split, _, ' ', -1))
     .value()
-var labeledData = _.zipObject(columns, _.unzip(data));
 
-console.log(
-  _.mapValues(
-    _.groupBy(_.zip(labeledData['outlook'], labeledData[resultColumn]), 0),
-    _.partial(_.countBy, _, 1)
-  )
-)
+function decisionTree(data, attributesColumns, resultColumn) {
+  var labeledData = _.zipObject(columns, _.unzip(data));
+  var targetEntropy = entropy(_.values(_.countBy(labeledData[resultColumn])));
+  var result = {};
+
+  var attributesFrequencyData = attributesFrequency(
+    attributesColumns, resultColumn, labeledData
+  );
+
+  var attributesBranchesEntropy = _.mapValues(attributesFrequencyData, function(attr) {
+    return _.mapValues(attr, function(branches) {
+      var yes = branches.yes || 0;
+      var no = branches.no || 0;
+      return (yes + no) / data.length * entropy([yes, no])
+    });
+  });
+
+  var attributesEntropy = _.mapValues(attributesBranchesEntropy, function(branches) {
+    return _.sum(_.values(branches))
+  });
+
+  // get data from attributesEntropy instead
+  var attributesInformationGain = _.mapValues(attributesEntropy, function(branches) {
+    return targetEntropy - branches;
+  });
+
+  var selectedAttribute = _.maxBy(_.toPairs(attributesInformationGain), 1)[0];
+
+  result[selectedAttribute] = _.mapValues(
+    attributesBranchesEntropy[selectedAttribute], function(branchEntropy, branchKey) {
+      if (branchEntropy === 0) {
+        return attributesFrequencyData[selectedAttribute][branchKey].yes ? true : false;
+      }
+      // wydzielanie podzbioru infrmacji dle tego atrybutu (filter na data)
+      // rekurencyjne wywolanie drzewa
+    }
+  );
+
+  return result;
+}
+
+console.log(decisionTree(data, attributesColumns, resultColumn));
