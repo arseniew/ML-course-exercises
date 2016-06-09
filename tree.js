@@ -23,7 +23,8 @@ function entropy(probs) {
   var total = _.sum(probs);
   return _.reduce(probs, function(ent, prob) {
     var probRate = prob / total;
-    return ent + (- probRate * Math.log2(probRate))
+    var frag = - probRate * Math.log2(probRate);
+    return ent + (frag || 0)
   }, 0)
 }
 
