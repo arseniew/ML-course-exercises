@@ -28,15 +28,13 @@ function entropy(probs) {
   }, 0)
 }
 
-
-
 var data = _(rawData)
     .split('\n')
     .compact()
     .map(_.partial(_.split, _, ' ', -1))
     .value()
 
-function decisionTree(data, attributesColumns, resultColumn) {
+function decisionTree(data, columns, attributesColumns, resultColumn) {
   var labeledData = _.zipObject(columns, _.unzip(data));
   var targetEntropy = entropy(_.values(_.countBy(labeledData[resultColumn])));
   var result = {};
@@ -57,24 +55,27 @@ function decisionTree(data, attributesColumns, resultColumn) {
     return _.sum(_.values(branches))
   });
 
-  // get data from attributesEntropy instead
   var attributesInformationGain = _.mapValues(attributesEntropy, function(branches) {
     return targetEntropy - branches;
   });
 
   var selectedAttribute = _.maxBy(_.toPairs(attributesInformationGain), 1)[0];
-
+  var selectedAttributeColumnIndex = columns.indexOf(selectedAttribute);
   result[selectedAttribute] = _.mapValues(
     attributesBranchesEntropy[selectedAttribute], function(branchEntropy, branchKey) {
       if (branchEntropy === 0) {
         return attributesFrequencyData[selectedAttribute][branchKey].yes ? true : false;
       }
-      // wydzielanie podzbioru infrmacji dle tego atrybutu (filter na data)
-      // rekurencyjne wywolanie drzewa
+      return decisionTree(
+        data.filter(function(row) {return row[selectedAttributeColumnIndex] === branchKey}),
+        columns,
+        attributesColumns,
+        resultColumn
+      );
     }
   );
 
   return result;
 }
 
-console.log(decisionTree(data, attributesColumns, resultColumn));
+console.log(JSON.stringify(decisionTree(data, columns, attributesColumns, resultColumn), false, 2));
